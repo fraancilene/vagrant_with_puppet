@@ -44,6 +44,28 @@ exec{"musicjungle":
   require => Service["mysql"]
 }
 
+# criando uma senha para o banco de dados
+exec { "mysql-password" :
+  command => "mysql -uroot -e \"GRANT ALL PRIVILEGES ON * TO 'musicjungle'@'%' IDENTIFIED BY 'minha-senha';\" musicjungle",
+  unless  => "mysql -umusicjungle -pminha-senha musicjungle",
+  path => "/usr/bin",
+  require => Exec["musicjungle"]
+}
+
+# colocando que o ambiente será de produção (na última linha)
+fine_line{
+  "production":
+    file => "/etc/default/tomcat8",
+    line => "JAVA_OPTS=\"\$JAVA_OPTS -Dbr.com.caelum.vraptor.environment=production\""
+}
+
+define fine_line($file, $line){
+  exec{"/bin/echo '${line}' >> '${file}'":
+        unless => "/bin/grep -qFx '${line}' '${file}'" # se já houver essa linha escrita, não coloca de novo
+  }
+}
+
+
 # colocando a aplicação na pasta webapps do tomcat para subir para produção 
 file {"/var/lib/tomcat8/webapps/vraptor-musicjungle.war":
   # copiando esse  arquivo .war para a pasta do tomcat
