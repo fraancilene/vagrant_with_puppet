@@ -36,12 +36,15 @@ service {"mysql":
   require => Package["mysql-server"] # informando que depende do pacote mysql-server
 }
 
+# criando o banco de dados
 exec{"musicjungle":
   command => "mysqladmin -uroot create musicjungle",
-  path => "/usr/bin",
+  unless => "mysql -u root musicjungle", # se o banco existe, não roda esse comando
+  path => '/usr/bin',
   require => Service["mysql"]
 }
 
+# colocando a aplicação na pasta webapps do tomcat para subir para produção 
 file {"/var/lib/tomcat8/webapps/vraptor-musicjungle.war":
   # copiando esse  arquivo .war para a pasta do tomcat
   source => "/vagrant/manifests/vraptor-musicjungle.war",
